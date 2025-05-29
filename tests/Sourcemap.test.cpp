@@ -761,4 +761,51 @@ TEST_CASE_FIXTURE(Fixture, "child_properties_of_game_are_cleared_when_an_invalid
     CHECK_EQ(Luau::get<Luau::UnknownProperty>(result2.errors[0])->key, "Part");
 }
 
+TEST_CASE_FIXTURE(Fixture, "sourcemap_updates_marks_files_as_dirty")
+{
+    loadSourcemap(R"(
+        {
+            "name": "game",
+            "className": "DataModel",
+            "children": [
+                {
+                    "name": "Workspace",
+                    "className": "Workspace",
+                    "children": [{ "name": "Part", "className": "Part" }]
+                }
+            ]
+        }
+    )");
+
+    auto document = newDocument("foo.luau", R"(
+        local part = game.Workspace.Part
+    )");
+
+    lsp::HoverParams params;
+    params.textDocument = {document};
+    params.position = lsp::Position{1, 16};
+    auto hover = workspace.hover(params);
+
+    REQUIRE(hover);
+    CHECK_EQ(hover->contents.value, codeBlock("luau", "local part: Part"));
+
+    loadSourcemap(R"(
+        {
+            "name": "game",
+            "className": "DataModel",
+            "children": [
+                {
+                    "name": "Workspace",
+                    "className": "Workspace",
+                    "children": [{ "name": "Part2", "className": "Part" }]
+                }
+            ]
+        }
+    )");
+
+    auto hover2 = workspace.hover(params);
+    REQUIRE(hover2);
+    CHECK_EQ(hover2->contents.value, codeBlock("luau", "local part: *error-type*"));
+}
+
 TEST_SUITE_END();
