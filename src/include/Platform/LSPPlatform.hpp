@@ -50,6 +50,13 @@ public:
 
     [[nodiscard]] virtual std::optional<Uri> resolveToRealPath(const Luau::ModuleName& name) const;
 
+#ifdef NEVERMORE_STRING_REQUIRE
+    [[nodiscard]] virtual std::optional<Luau::SourceCode> resolveToVirtualSourceCode(const Luau::ModuleName& name) const
+    {
+        return std::nullopt;
+    }
+#endif
+
     [[nodiscard]] virtual Luau::SourceCode::Type sourceCodeTypeFromPath(const Uri& path) const
     {
         return Luau::SourceCode::Type::Module;

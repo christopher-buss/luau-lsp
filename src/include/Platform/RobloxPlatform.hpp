@@ -79,6 +79,13 @@ struct SourceNode
     // A different TypeId is created for each type checker (frontend.typeChecker and frontend.typeCheckerForAutocomplete)
     mutable std::unordered_map<Luau::GlobalTypes const*, Luau::TypeId> tys{}; // NB: NOT POPULATED BY SOURCEMAP, created manually. Can be null!
 
+#ifdef NEVERMORE_STRING_REQUIRE
+    bool isVirtualNevermoreLoader = false;
+    // The corresponding TypeId for this sourcemap node
+    // A different TypeId is created for each type checker (frontend.typeChecker and frontend.typeCheckerForAutocomplete)
+    std::unordered_map<Luau::GlobalTypes const*, Luau::TypeId> stringRequireTypes{}; // NB: NOT POPULATED BY SOURCEMAP, created manually. Can be null!
+#endif
+
     SourceNode(std::string name, std::string className, std::vector<std::string> filePaths, std::vector<SourceNode*> children);
 
     bool isScript() const;
@@ -111,8 +118,12 @@ private:
     mutable std::unordered_map<Uri, const SourceNode*, UriHash> realPathsToSourceNodes{};
     mutable std::unordered_map<Luau::ModuleName, const SourceNode*> virtualPathsToSourceNodes{};
 
-    std::optional<const SourceNode*> getSourceNodeFromVirtualPath(const Luau::ModuleName& name) const;
-    std::optional<const SourceNode*> getSourceNodeFromRealPath(const Uri& name) const;
+#ifdef NEVERMORE_STRING_REQUIRE
+    mutable std::unordered_map<std::string, SourceNodePtr> moduleNameToSourceNode{};
+#endif
+
+    std::optional<SourceNodePtr> getSourceNodeFromVirtualPath(const Luau::ModuleName& name) const;
+    std::optional<SourceNodePtr> getSourceNodeFromRealPath(const Uri& name) const;
 
     static Luau::ModuleName getVirtualPathFromSourceNode(const SourceNode* sourceNode);
 
@@ -146,6 +157,12 @@ public:
     std::optional<Luau::ModuleName> resolveToVirtualPath(const Uri& name) const override;
 
     std::optional<Uri> resolveToRealPath(const Luau::ModuleName& name) const override;
+
+#ifdef NEVERMORE_STRING_REQUIRE
+    std::optional<Luau::SourceCode> resolveToVirtualSourceCode(const Luau::ModuleName& name) const override;
+    Luau::TypeId getStringRequireType(const Luau::GlobalTypes& globals, Luau::TypeArena& arena, const SourceNodePtr& node) const;
+    std::optional<SourceNodePtr> findStringModule(const std::string& moduleName) const;
+#endif
 
     Luau::SourceCode::Type sourceCodeTypeFromPath(const Uri& path) const override;
 

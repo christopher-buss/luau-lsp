@@ -6,6 +6,7 @@ option(LSP_BUILD_ASAN "Build with ASAN" OFF)
 option(LSP_STATIC_CRT "Link with the static CRT (/MT)" OFF)
 option(LSP_BUILD_WITH_SENTRY "Build with Sentry (crash reporting)" OFF)
 option(LSP_WERROR "Warnings as errors" ON)
+option(NEVERMORE_STRING_REQUIRE "Build with Nevermore String Requires" ON)
 
 set(LSP_VERSION "1.53.1")
 set(LSP_NAME "Luau")
@@ -22,6 +23,10 @@ endif ()
 
 if (LSP_BUILD_WITH_SENTRY)
     add_definitions(-DLSP_BUILD_WITH_SENTRY)
+endif ()
+
+if (NEVERMORE_STRING_REQUIRE)
+    add_definitions(-DNEVERMORE_STRING_REQUIRE)
 endif ()
 
 project(Luau.LanguageServer LANGUAGES CXX)
@@ -58,6 +63,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/CliConfigurationParser.cpp
         src/platform/AutoImports.cpp
         src/platform/LSPPlatform.cpp
+        src/platform/roblox/NevermoreStringRequire.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp
         src/platform/roblox/RobloxCodeAction.cpp
