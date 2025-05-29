@@ -69,7 +69,8 @@ jobs:
           - os: windows-latest
             artifact-name: luau-lsp-win64
             code-target: [win32-x64, win32-arm64]
-          - os: ubuntu-20.04
+            crash-reporting: false
+          - os: ubuntu-22.04
             artifact-name: luau-lsp-linux
             code-target: [linux-x64]
           - os: ubuntu-22.04-arm
@@ -78,6 +79,7 @@ jobs:
           - os: macos-latest
             artifact-name: luau-lsp-macos
             code-target: [darwin-x64, darwin-arm64]
+            crash-reporting: false
 
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

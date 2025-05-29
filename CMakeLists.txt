@@ -46,12 +46,9 @@ target_sources(Luau.LanguageServer PRIVATE
         src/JsonTomlSyntaxParser.cpp
         src/CliConfigurationParser.cpp
         src/platform/LSPPlatform.cpp
-<<<<<<< HEAD
-=======
         src/platform/roblox/NevermoreStringRequire.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp
->>>>>>> f3c855e (feat: Add virtual nevermore loader support)
         src/platform/roblox/RobloxCodeAction.cpp
         src/platform/roblox/RobloxColorProvider.cpp
         src/platform/roblox/RobloxCompletion.cpp
