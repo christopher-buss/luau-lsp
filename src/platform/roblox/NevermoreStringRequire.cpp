@@ -49,14 +49,14 @@ std::optional<Luau::WithPredicate<Luau::TypePackId>> MagicStringRequireLookup::h
 
     if (node->name == moduleName)
     {
-        typeChecker.reportError(Luau::TypeError{expr.args.data[0]->location, Luau::UnknownRequire{ moduleName }});
+        typeChecker.reportError(Luau::TypeError{expr.args.data[0]->location, Luau::UnknownRequire{moduleName}});
         return std::nullopt;
     }
 
     auto module = platform.findStringModule(moduleName);
     if (!module.has_value())
     {
-        typeChecker.reportError(Luau::TypeError{expr.args.data[0]->location, Luau::UnknownRequire{ moduleName }});
+        typeChecker.reportError(Luau::TypeError{expr.args.data[0]->location, Luau::UnknownRequire{moduleName}});
         return std::nullopt;
     }
 
@@ -80,26 +80,25 @@ bool MagicStringRequireLookup::infer(const Luau::MagicFunctionCallContext& conte
     auto module = platform.findStringModule(moduleName);
     if (!module.has_value())
     {
-        context.solver->reportError(Luau::UnknownRequire{ moduleName }, context.callSite->args.data[0]->location);
+        context.solver->reportError(Luau::UnknownRequire{moduleName}, context.callSite->args.data[0]->location);
         return false;
     }
-
 
     Luau::ModuleInfo moduleInfo;
     moduleInfo.name = module.value()->virtualPath;
 
-    asMutable(context.result)->ty.emplace<Luau::BoundTypePack>(context.solver->arena->addTypePack({
-        context.solver->resolveModule(moduleInfo, context.callSite->args.data[0]->location)
-    }));
+    asMutable(context.result)
+        ->ty.emplace<Luau::BoundTypePack>(
+            context.solver->arena->addTypePack({context.solver->resolveModule(moduleInfo, context.callSite->args.data[0]->location)}));
 
     return true;
 }
 
-static void attachMagicStringRequireLookupFunction(const Luau::GlobalTypes& globals, const RobloxPlatform& platform, Luau::TypeArena& arena, const SourceNodePtr& node, Luau::TypeId lookupFuncTy)
+static void attachMagicStringRequireLookupFunction(
+    const Luau::GlobalTypes& globals, const RobloxPlatform& platform, Luau::TypeArena& arena, const SourceNodePtr& node, Luau::TypeId lookupFuncTy)
 {
 
-    Luau::attachMagicFunction(
-        lookupFuncTy, std::make_shared<MagicStringRequireLookup>(globals, platform, arena, node));
+    Luau::attachMagicFunction(lookupFuncTy, std::make_shared<MagicStringRequireLookup>(globals, platform, arena, node));
     Luau::attachTag(lookupFuncTy, kSourcemapGeneratedTag);
     Luau::attachTag(lookupFuncTy, "StringRequires");
     Luau::attachTag(lookupFuncTy, "require"); // Magic tag
@@ -130,8 +129,8 @@ Luau::TypeId RobloxPlatform::getStringRequireType(const Luau::GlobalTypes& globa
 
             // TODO: Resolve name to lazy instance
             // Or type union
-            Luau::TypePackId argTypes = arena.addTypePack({ globals.builtinTypes->stringType });
-            Luau::TypePackId retTypes = arena.addTypePack({ globals.builtinTypes->anyType }); // This should be overriden by the type checker
+            Luau::TypePackId argTypes = arena.addTypePack({globals.builtinTypes->stringType});
+            Luau::TypePackId retTypes = arena.addTypePack({globals.builtinTypes->anyType}); // This should be overriden by the type checker
             Luau::FunctionType functionCtv(argTypes, retTypes);
 
             auto typeId = arena.addType(std::move(functionCtv));
@@ -152,7 +151,15 @@ std::optional<SourceNodePtr> RobloxPlatform::findStringModule(const std::string&
     // TODO: Use "node_modules" as a project scope and handle duplications
     auto result = this->moduleNameToSourceNode.find(moduleName);
     if (result != this->moduleNameToSourceNode.end())
-        return result->second;
+    {
+        // Reject string requires when there's an "init" folder present
+        auto sourceNode = result->second;
+        if (sourceNode && sourceNode->findChild("init"))
+        {
+            return std::nullopt; // Reject the string require
+        }
+        return sourceNode;
+    }
 
     return std::nullopt;
 }
@@ -182,7 +189,7 @@ end
 return loader
 )lua";
 
-    return Luau::SourceCode {
+    return Luau::SourceCode{
         source,
         Luau::SourceCode::Type::Module,
     };

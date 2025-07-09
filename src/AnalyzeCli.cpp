@@ -104,7 +104,7 @@ static void reportWarning(ReportFormat format, const char* name, const Luau::Lin
 }
 
 static bool analyzeFile(
-    Luau::Frontend& frontend, const std::string& path, ReportFormat format, bool annotate, std::vector<std::string>& ignoreGlobPatterns)
+    Luau::Frontend& frontend, const std::string& path, ReportFormat format, bool annotate, std::vector<std::string>& ignoreGlobPatterns, const CliClient& client)
 {
     Luau::CheckResult cr;
     Luau::ModuleName name = path;
@@ -120,7 +120,13 @@ static bool analyzeFile(
 
     unsigned int reportedErrors = 0;
     for (auto& error : cr.errors)
+    {
+        // If includeDependents is false, only report errors from the target file
+        if (!client.configuration.diagnostics.includeDependents && error.moduleName != name)
+            continue;
+        
         reportedErrors += reportError(frontend, format, error, ignoreGlobPatterns);
+    }
 
     // For the human readable module name, we use a relative version
     auto [_, relativePath] = getFilePath(static_cast<WorkspaceFileResolver*>(frontend.fileResolver), path);
@@ -396,7 +402,7 @@ int startAnalyze(const argparse::ArgumentParser& program)
     int failed = 0;
 
     for (const auto& path : files)
-        failed += !analyzeFile(frontend, path, format, annotate, ignoreGlobPatterns);
+        failed += !analyzeFile(frontend, path, format, annotate, ignoreGlobPatterns, client);
 
     if (!client.diagnostics.empty())
     {

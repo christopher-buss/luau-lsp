@@ -57,6 +57,14 @@ std::optional<std::string> getAncestorPath(const std::string& path, const std::s
 
 std::string convertToScriptPath(std::string path)
 {
+#ifdef NEVERMORE_STRING_REQUIRE
+    // Nevermore style: use just the filename without extension
+    std::filesystem::path p(path);
+    auto filename = p.filename().string();
+    filename = removeSuffix(filename, ".luau");
+    filename = removeSuffix(filename, ".lua");
+    return filename;
+#else
     std::string output = "";
 #ifdef _WIN32
     std::replace(path.begin(), path.end(), '\\', '/');
@@ -87,6 +95,7 @@ std::string convertToScriptPath(std::string path)
         }
     }
     return output;
+#endif
 }
 
 

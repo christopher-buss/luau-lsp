@@ -27,7 +27,15 @@ bool FindImportsVisitor::visit(Luau::AstStatLocal* local)
     if (handleLocal(local, localName, expr, startLine, endLine))
         return false;
 
-    if (isRequire(expr))
+    // Check if this is a require redefinition (e.g., local require = require(...))
+    bool isRequireRedefinition = std::string(localName->name.value) == "require" && isRequire(expr);
+    if (isRequireRedefinition)
+    {
+        requireRedefinitionLine = endLine;
+    }
+
+    // Only add normal requires to the requiresMap, not require redefinitions
+    if (isRequire(expr) && !isRequireRedefinition)
     {
         firstRequireLine = !firstRequireLine.has_value() || firstRequireLine.value() >= startLine ? startLine : firstRequireLine.value();
 
@@ -116,11 +124,24 @@ static size_t getLengthEqual(const std::string_view& a, const std::string_view& 
     return i;
 }
 
+// static bool isStringRequire(const std::string& requirePath)
+// {
+//     return Luau::startsWith(requirePath, "\"");
+// }
+
 size_t computeBestLineForRequire(
     const FindImportsVisitor& importsVisitor, const TextDocument& textDocument, const std::string& require, size_t minimumLineNumber)
 {
     size_t lineNumber = minimumLineNumber;
     size_t bestLength = 0;
+
+    // If we have a require redefinition and this is a string require,
+    // ensure we place it after the redefinition line
+    if (importsVisitor.requireRedefinitionLine.has_value())
+    {
+        lineNumber = std::max(lineNumber, importsVisitor.requireRedefinitionLine.value() + 1);
+    }
+
     for (auto& group : importsVisitor.requiresMap)
     {
         for (auto& [_, stat] : group)
@@ -156,4 +177,4 @@ size_t computeBestLineForRequire(
 
     return lineNumber;
 }
-}
+} // namespace Luau::LanguageServer::AutoImports

@@ -28,17 +28,7 @@ endif ()
 if (NEVERMORE_STRING_REQUIRE)
     add_definitions(-DNEVERMORE_STRING_REQUIRE)
 endif ()
-
 project(Luau.LanguageServer LANGUAGES CXX)
-
-# Sentry setup
-if (LSP_BUILD_WITH_SENTRY)
-    add_subdirectory(extern/sentry-native)
-    set(BUILD_SHARED_LIBS OFF)
-    set(SENTRY_BUILD_RUNTIMESTATIC ON)
-    set(CRASHPAD_ENABLE_STACKTRACE ON)
-endif ()
-
 add_subdirectory(luau)
 add_library(Luau.LanguageServer STATIC)
 add_executable(Luau.LanguageServer.CLI)
@@ -61,8 +51,8 @@ target_sources(Luau.LanguageServer PRIVATE
         src/Thread.cpp
         src/JsonTomlSyntaxParser.cpp
         src/CliConfigurationParser.cpp
-        src/platform/AutoImports.cpp
         src/platform/LSPPlatform.cpp
+        src/platform/AutoImports.cpp
         src/platform/roblox/NevermoreStringRequire.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp
@@ -75,6 +65,8 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/roblox/RobloxSourcemap.cpp
         src/platform/roblox/RobloxSourceNode.cpp
         src/platform/roblox/RobloxStudioPlugin.cpp
+        src/transport/StdioTransport.cpp
+        src/transport/PipeTransport.cpp
         src/operations/Diagnostics.cpp
         src/operations/Completion.cpp
         src/operations/DocumentSymbol.cpp
@@ -92,8 +84,6 @@ target_sources(Luau.LanguageServer PRIVATE
         src/operations/FoldingRange.cpp
         src/operations/CallHierarchy.cpp
         src/operations/Bytecode.cpp
-        src/transport/PipeTransport.cpp
-        src/transport/StdioTransport.cpp
         extern/glob/match.cpp
 )
 
@@ -200,16 +190,3 @@ target_compile_features(Luau.LanguageServer.Test PRIVATE cxx_std_17)
 target_compile_options(Luau.LanguageServer.Test PRIVATE ${LUAU_LSP_OPTIONS})
 target_include_directories(Luau.LanguageServer.Test PRIVATE tests ${EXTERN_INCLUDES} extern/doctest)
 target_link_libraries(Luau.LanguageServer.Test PRIVATE Luau.Ast Luau.Analysis Luau.LanguageServer)
-
-if (LSP_BUILD_WITH_SENTRY)
-    target_link_libraries(Luau.LanguageServer PRIVATE sentry)
-    target_link_libraries(Luau.LanguageServer.CLI PRIVATE sentry)
-
-    add_custom_command(
-            TARGET Luau.LanguageServer.CLI POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:crashpad_handler>"
-            "$<TARGET_FILE_DIR:Luau.LanguageServer.CLI>"
-            COMMENT "Copying crashpad_handler to output directory"
-    )
-endif ()

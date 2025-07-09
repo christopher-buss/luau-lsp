@@ -1411,4 +1411,38 @@ TEST_CASE_FIXTURE(Fixture, "auto_import_empty_require_statement")
     CHECK_EQ(item->additionalTextEdits[0].range.start.line, 1);
 }
 
+TEST_CASE_FIXTURE(Fixture, "string_requires_inserted_after_require_redefinition")
+{
+    client->globalConfig.completion.imports.enabled = true;
+    client->globalConfig.completion.imports.stringRequires.enabled = true;
+
+    newDocument("library.luau", "");
+
+    FindImportsVisitor visitor;
+    auto user = newDocument("user.luau", R"(
+        local require = require(ReplicatedStorage:WaitForChild("Sonar"))
+        local alphabet = require("alphabet")
+    )");
+    auto ctx = createContext(this, user, &visitor);
+
+    std::vector<lsp::CompletionItem> items;
+    suggestStringRequires(ctx, items);
+
+    CHECK_EQ(items.size(), 1);
+    auto item = getItem(items, "library");
+    REQUIRE(item);
+    REQUIRE_EQ(item->additionalTextEdits.size(), 1);
+
+    // Debug: Let's see what values we actually get
+    INFO("requireRedefinitionLine: " << (visitor.requireRedefinitionLine.has_value() ? std::to_string(visitor.requireRedefinitionLine.value())
+                                                                                     : "none"));
+    INFO("insertionLine: " << item->additionalTextEdits[0].range.start.line);
+    INFO("newText: " << item->additionalTextEdits[0].newText);
+
+    // Should be inserted after the require redefinition line since both "alphabet" and "library" are plain string requires
+    // The require redefinition is on line 1, so string requires should start from line 2
+    // Since "library" comes after "alphabet" lexicographically, it should go on line 3
+    CHECK_EQ(item->additionalTextEdits[0].range.start.line, 2);
+}
+
 TEST_SUITE_END();

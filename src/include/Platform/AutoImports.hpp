@@ -18,6 +18,7 @@ private:
 
 public:
     std::optional<size_t> firstRequireLine = std::nullopt;
+    std::optional<size_t> requireRedefinitionLine = std::nullopt;
     std::vector<std::map<std::string, Luau::AstStatLocal*>> requiresMap{{}};
 
     virtual bool handleLocal(Luau::AstStatLocal* local, Luau::AstLocal* localName, Luau::AstExpr* expr, unsigned int startLine, unsigned int endLine)

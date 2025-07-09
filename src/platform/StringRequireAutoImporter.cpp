@@ -55,6 +55,22 @@ std::optional<std::string> computeBestAliasedPath(const Uri& to, const AliasMap&
 std::pair<std::string, SortText::SortTextT> computeRequirePath(
     const Uri& from, Uri to, const AliasMap& availableAliases, ImportRequireStyle importRequireStyle)
 {
+#ifdef NEVERMORE_STRING_REQUIRE
+    // Nevermore style: use just the filename without extension
+    auto filename = to.filename();
+    filename = removeSuffix(filename, ".luau");
+    filename = removeSuffix(filename, ".lua");
+
+    // If the filename is "init", use the folder name instead
+    if (filename == "init")
+    {
+        auto parent = to.parent();
+        if (parent)
+            filename = parent->filename();
+    }
+
+    return {filename, SortText::AutoImports};
+#else
     auto fromParent = from.parent();
 
     if (isInitLuauFile(to))
@@ -100,6 +116,7 @@ std::pair<std::string, SortText::SortTextT> computeRequirePath(
     }
 
     return {relativePath, SortText::AutoImports};
+#endif
 }
 
 void suggestStringRequires(const StringRequireAutoImporterContext& ctx, std::vector<lsp::CompletionItem>& items)
