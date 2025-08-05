@@ -83,7 +83,7 @@ struct SourceNode
     bool isVirtualNevermoreLoader = false;
     // The corresponding TypeId for this sourcemap node
     // A different TypeId is created for each type checker (frontend.typeChecker and frontend.typeCheckerForAutocomplete)
-    std::unordered_map<Luau::GlobalTypes const*, Luau::TypeId> stringRequireTypes{}; // NB: NOT POPULATED BY SOURCEMAP, created manually. Can be null!
+    mutable std::unordered_map<Luau::GlobalTypes const*, Luau::TypeId> stringRequireTypes{}; // NB: NOT POPULATED BY SOURCEMAP, created manually. Can be null!
 #endif
 
     SourceNode(std::string name, std::string className, std::vector<std::string> filePaths, std::vector<SourceNode*> children);
@@ -98,6 +98,8 @@ struct SourceNode
 
     static SourceNode* fromJson(const json& j, Luau::TypedAllocator<SourceNode>& allocator);
 };
+
+using SourceNodePtr = const SourceNode*;
 
 struct PluginNode
 {

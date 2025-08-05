@@ -499,9 +499,10 @@ void RobloxPlatform::writePathsToMap(SourceNode* node, const std::string& base)
                 this->moduleNameToSourceNode.insert({child->name, child});
             }
 
-            for (std::filesystem::path& filePath : child->filePaths)
+            for (const std::string& filePath : child->filePaths)
             {
-                scriptChildFilePaths.insert(filePath.parent_path());
+                std::filesystem::path path(filePath);
+                scriptChildFilePaths.insert(path.parent_path());
             }
         }
     }
@@ -511,10 +512,8 @@ void RobloxPlatform::writePathsToMap(SourceNode* node, const std::string& base)
         std::filesystem::path realPath = *(scriptChildFilePaths.begin());
 
         // Create a virtual source_node for nevermore loader
-        std::shared_ptr<struct SourceNode> source_node = std::make_shared<SourceNode>();
+        SourceNode* source_node = sourceNodeAllocator.allocate(SourceNode("loader", "ModuleScript", std::vector<std::string>{}, std::vector<SourceNode*>{}));
         source_node->parent = node;
-        source_node->name = "loader";
-        source_node->className = "ModuleScript";
         source_node->isVirtualNevermoreLoader = true;
         node->children.push_back(source_node);
 

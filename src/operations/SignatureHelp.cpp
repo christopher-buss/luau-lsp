@@ -17,8 +17,7 @@ static bool checkOverloadMatch(Luau::TypePackId subTp, Luau::TypePackId superTp,
     Luau::InternalErrorReporter iceReporter;
     Luau::UnifierSharedState unifierState(&iceReporter);
     Luau::SimplifierPtr simplifier = newSimplifier(Luau::NotNull{typeArena}, builtinTypes);
-    Luau::Normalizer normalizer{
-        typeArena, builtinTypes, Luau::NotNull{&unifierState}, FFlag::LuauSolverV2 ? Luau::SolverMode::New : Luau::SolverMode::Old};
+    Luau::Normalizer normalizer{typeArena, builtinTypes, Luau::NotNull{&unifierState}};
 
     if (FFlag::LuauSolverV2)
     {
