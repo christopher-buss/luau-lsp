@@ -23,7 +23,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
-          draft: true
+          draft: false
 
   build-plugin:
     needs: ["create-release"]
@@ -52,13 +52,13 @@ jobs:
           asset_name: Luau.rbxm
           asset_content_type: application/octet-stream
 
-      - name: Publish Plugin to Roblox
-        env:
-          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-        working-directory: plugin
-        run: |
-          rojo build test.project.json --output plugin_place.rbxl
-          lune run cloud/execute_task.luau plugin_place.rbxl cloud/publishing_task.luau
+      # - name: Publish Plugin to Roblox
+      #   env:
+      #     ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+      #   working-directory: plugin
+      #   run: |
+      #     rojo build test.project.json --output plugin_place.rbxl
+      #     lune run cloud/execute_task.luau plugin_place.rbxl cloud/publishing_task.luau
 
   dist:
     needs: ["create-release"]
