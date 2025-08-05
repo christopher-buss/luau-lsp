@@ -238,7 +238,8 @@ void WorkspaceFolder::onDidChangeWatchedFiles(const std::vector<lsp::FileEvent>&
     }
 
     // Parse require graph for files if indexing enabled
-    frontend.parseModules(dirtyFiles);
+    frontend.queueModuleCheck(dirtyFiles);
+    frontend.checkQueuedModules();
 
     // Clear the diagnostics for files in case it was not managed
     clearDiagnosticsForFiles(deletedFiles);
@@ -385,7 +386,8 @@ void WorkspaceFolder::indexFiles(const ClientConfiguration& config)
     client->sendWorkDoneProgressReport(kIndexProgressToken, std::to_string(moduleNames.size()) + " files");
 
     frontend.clearStats();
-    frontend.parseModules(moduleNames);
+    frontend.queueModuleCheck(moduleNames);
+    frontend.checkQueuedModules();
 
     client->sendLogMessage(lsp::MessageType::Info,
         "Indexed " + std::to_string(frontend.stats.files) + " files (" + std::to_string(frontend.stats.lines) +
